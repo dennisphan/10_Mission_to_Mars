@@ -5,7 +5,6 @@ import pandas as pd
 import datetime as dt
 from webdriver_manager.chrome import ChromeDriverManager
 
-
 def scrape_all():
     # Initiate headless driver for deployment
     executable_path = {'executable_path': ChromeDriverManager().install()}
@@ -19,6 +18,7 @@ def scrape_all():
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
+        "hemispheres": mars_hemispheres(browser),
         "last_modified": dt.datetime.now()
     }
 
@@ -97,6 +97,52 @@ def mars_facts():
     # Convert dataframe into HTML format, add bootstrap
     return df.to_html(classes="table table-striped")
 
+def mars_hemispheres(browser):
+    # 1. Use browser to visit the URL 
+    url = 'https://marshemispheres.com/'
+    browser.visit(url)
+    
+    # 2. Create a list to hold the images and titles.
+    hemisphere_image_urls = []
+    
+    # 3. Write code to retrieve the image urls and titles for each hemisphere.
+    # parse the current page
+    html = browser.html
+    section_soup = soup(html, 'html.parser')
+
+    # get all sections with links to pages about Mar's hemisphere
+    section_list = section_soup.find_all('div', class_='description')
+        
+    # get all hyperlinks to pages about Mar's hemisphere
+    link_list = list()
+    [link_list.append(section.find('a')['href']) for section in section_list]
+    
+    
+    # access pages with high solution images and get the images
+    for link in link_list:
+    
+        # click on hyperlink to access
+        browser.visit(url + link)
+
+        # parse the current page
+        html = browser.html
+        img_soup = soup(html, 'html.parser')
+
+        # get the hyperlink part of the image
+        img_url_rel = img_soup.find('img', class_='wide-image').get('src')
+
+        # create absolute link for the image
+        img_url = url + img_url_rel
+
+        # get the title
+        title = img_soup.find('h2', class_='title').get_text()
+
+        # add image url and title to the list
+        hemisphere_image_urls.append({'img_url':img_url, 'title':title})
+
+    return hemisphere_image_urls
+    
+   
 if __name__ == "__main__":
 
     # If running as script, print scraped data
